@@ -55,49 +55,49 @@ nameToDigit "eight" = '8'
 nameToDigit "nine" = '9'
 nameToDigit _ = error "Invalid digit"
 
+simpleDigitParser :: Parser Char
+simpleDigitParser = parseChar '0'
+                <|> parseChar '1'
+                <|> parseChar '2'
+                <|> parseChar '3'
+                <|> parseChar '4'
+                <|> parseChar '5'
+                <|> parseChar '6'
+                <|> parseChar '7'
+                <|> parseChar '8'
+                <|> parseChar '9'
+
+simpleDigitNameParser :: Parser String
+simpleDigitNameParser = parseString "zero"
+                    <|> parseString "one"
+                    <|> parseString "two"
+                    <|> parseString "three"
+                    <|> parseString "four"
+                    <|> parseString "five"
+                    <|> parseString "six"
+                    <|> parseString "seven"
+                    <|> parseString "eight"
+                    <|> parseString "nine"
+
+simpleReverseDigitNameParser :: Parser String
+simpleReverseDigitNameParser = (parseString . reverse) "zero"
+                           <|> (parseString . reverse) "one"
+                           <|> (parseString . reverse) "two"
+                           <|> (parseString . reverse) "three"
+                           <|> (parseString . reverse) "four"
+                           <|> (parseString . reverse) "five"
+                           <|> (parseString . reverse) "six"
+                           <|> (parseString . reverse) "seven"
+                           <|> (parseString . reverse) "eight"
+                           <|> (parseString . reverse) "nine"
+
 digitParser :: Parser Char
-digitParser = parseChar '0' 
-      <|> parseChar '1' 
-      <|> parseChar '2'
-      <|> parseChar '3'
-      <|> parseChar '4'
-      <|> parseChar '5'
-      <|> parseChar '6'
-      <|> parseChar '7'
-      <|> parseChar '8'
-      <|> parseChar '9'
-      <|> (nameToDigit <$> parseString "zero")
-      <|> (nameToDigit <$> parseString "one")
-      <|> (nameToDigit <$> parseString "two")
-      <|> (nameToDigit <$> parseString "three")
-      <|> (nameToDigit <$> parseString "four")
-      <|> (nameToDigit <$> parseString "five")
-      <|> (nameToDigit <$> parseString "six")
-      <|> (nameToDigit <$> parseString "seven")
-      <|> (nameToDigit <$> parseString "eight")
-      <|> (nameToDigit <$> parseString "nine")
+digitParser = simpleDigitParser
+          <|> nameToDigit <$> simpleDigitNameParser
 
 reverseDigitParser :: Parser Char
-reverseDigitParser = parseChar '0' 
-      <|> parseChar '1' 
-      <|> parseChar '2'
-      <|> parseChar '3'
-      <|> parseChar '4'
-      <|> parseChar '5'
-      <|> parseChar '6'
-      <|> parseChar '7'
-      <|> parseChar '8'
-      <|> parseChar '9'
-      <|> ((nameToDigit . reverse) <$> (parseString . reverse) "zero")
-      <|> ((nameToDigit . reverse) <$> (parseString . reverse) "one")
-      <|> ((nameToDigit . reverse) <$> (parseString . reverse) "two")
-      <|> ((nameToDigit . reverse) <$> (parseString . reverse) "three")
-      <|> ((nameToDigit . reverse) <$> (parseString . reverse) "four")
-      <|> ((nameToDigit . reverse) <$> (parseString . reverse) "five")
-      <|> ((nameToDigit . reverse) <$> (parseString . reverse) "six")
-      <|> ((nameToDigit . reverse) <$> (parseString . reverse) "seven")
-      <|> ((nameToDigit . reverse) <$> (parseString . reverse) "eight")
-      <|> ((nameToDigit . reverse) <$> (parseString . reverse) "nine")
+reverseDigitParser = simpleDigitParser
+      <|> (nameToDigit . reverse) <$> simpleReverseDigitNameParser
 
 parseUntilFound :: Parser Char -> String -> Char
 parseUntilFound parser [] = error "No digit in code!"
