@@ -1,7 +1,5 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 
-import Data.List
-import Data.Char (isDigit)
 import Control.Applicative
 
 newtype Parser a = Parser {
