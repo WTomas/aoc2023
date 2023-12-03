@@ -14,7 +14,7 @@ newtype Parser a = Parser {
     runParser :: String -> ParserResult a
 }
 
-data Value = Number Int Int | Dot | SpecialChar | NewLine deriving (Show)
+data Value = Number Int Int | Dot | SpecialChar | Star | NewLine deriving (Show)
 
 type WithPosition a = (a, Position)
 
@@ -80,8 +80,14 @@ dotParser = f <$> (parseSpan $ \c -> c == '.')
         f :: WithPosition String -> WithPosition Value
         f (chars, pos) = (Dot, pos)
 
+starParser :: Parser (WithPosition Value)
+starParser = f <$> parseChar '*'
+    where
+        f :: WithPosition Char -> WithPosition Value
+        f (chars, pos) = (Star, pos)
+
 specialCharacterParser :: Parser (WithPosition Value)
-specialCharacterParser = f <$> (parseCharPredicate $ \c -> (not . isDigit) c && c /= '.' && c /= '\n')
+specialCharacterParser = f <$> (parseCharPredicate $ \c -> (not . isDigit) c && c /= '.' && c /= '\n' && c /= '*')
     where
         f :: WithPosition Char -> WithPosition Value
         f (chars, pos) = (SpecialChar, pos)
@@ -99,9 +105,9 @@ isNumberToken :: WithPosition Value -> Bool
 isNumberToken (Number x y, pos) = True
 isNumberToken _ = False
 
-isSpecialCharToken :: WithPosition Value -> Bool
-isSpecialCharToken (SpecialChar, pos) = True
-isSpecialCharToken _ = False
+isStarToken :: WithPosition Value -> Bool
+isStarToken (Star, pos) = True
+isStarToken _ = False
 
 getPosNeighbours :: Position -> [Position]
 getPosNeighbours pos = do
@@ -125,19 +131,27 @@ positionsOverlap :: [Position] -> [Position] -> Bool
 positionsOverlap positions1 positions2 = 
     any (\position1 -> any (\position2 -> position1 == position2) positions2) positions1
 
+
 positionsAreNear :: Position -> Position -> Int -> Bool
 positionsAreNear specialCharPos numberPos numberLen = positionsOverlap (getPosNeighbours specialCharPos) (getNumberPosSpans numberPos numberLen)
+
+getGearRatioForStar :: Position -> [WithPosition Value] -> Int
+getGearRatioForStar gearPosition numberPositionsAndLengths = do
+    let remainingNumbers = filter (\(Number x xLen, pos) -> positionsAreNear gearPosition pos xLen) numberPositionsAndLengths
+    case remainingNumbers of
+        (Number x _, _):(Number y _, _):[] -> x * y
+        _ -> 0
 
 main :: IO()
 main = do
     manual <- readFile "day03/input.txt"
-    let maybeTokens = runParser (many ((digitParser <|> dotParser <|> specialCharacterParser <|> newLineParser)) ) manual $ Position 0 0
+    let maybeTokens = runParser (many ((digitParser <|> dotParser <|> specialCharacterParser <|> newLineParser <|> starParser)) ) manual $ Position 0 0
     case maybeTokens of
         Nothing -> error "No tokens were parsed!"
         Just (tokens, _) -> do
-            let specialChars = filter isSpecialCharToken tokens
+            let stars = filter isStarToken tokens
             let numbers = filter isNumberToken tokens
             print 
-                . sum
-                . map (\(Number n _, _) -> n )
-                . filter (\(Number n nLen, nPos) -> any (\(sc, scPos) -> positionsAreNear scPos nPos nLen) specialChars) $ numbers 
+                . sum 
+                . map (\(_, gearPos) -> getGearRatioForStar gearPos numbers) 
+                $ stars
